@@ -1,12 +1,19 @@
 service: product-service
 frameworkVersion: "3"
 
+custom:
+  productsTableName: products
+  stocksTableName: stocks
+
 provider:
   name: aws
   runtime: nodejs18.x
   versionFunctions: false
+  region: us-east-1
   environment:
-      frontendURL: https://d2q2y64ixwkjjo.cloudfront.net
+      FRONTEND_URL: https://d2q2y64ixwkjjo.cloudfront.net
+      PRODUCTS_TABLE_NAME: ${self:custom.productsTableName}
+      STOCKS_TABLE_NAME: ${self:custom.stocksTableName}
 
 functions:
   getProductsList:
@@ -15,10 +22,92 @@ functions:
       - httpApi:
           path: /products
           method: get
+    role: dynamodbLambdaRole
   getProductsById:
     handler: handler.getProductsById
     events:
       - httpApi:
           path: /products/{productId}
           method: get
+    role: dynamodbLambdaRole
+  createProduct:
+    handler: handler.createProduct
+    events:
+      - httpApi:
+          path: /products
+          method: post
+    role: dynamodbLambdaRole
 
+resources:
+  Resources:
+    dynamodbLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: dynamodbLambdaRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: DynamoDBAccessPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: ReadWriteTable
+                  Effect: Allow
+                  Action:
+                    - dynamodb:BatchGetItem
+                    - dynamodb:GetItem
+                    - dynamodb:Query
+                    - dynamodb:Scan
+                    - dynamodb:BatchWriteItem
+                    - dynamodb:PutItem
+                    - dynamodb:UpdateItem
+                  Resource: 
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.productsTableName}"
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.stocksTableName}"
+                - Sid: GetStreamRecords
+                  Effect: Allow
+                  Action: dynamodb:GetRecords
+                  Resource: 
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.productsTableName}/stream/*"
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.stocksTableName}/stream/*"
+                - Sid: WriteLogStreamsAndGroups
+                  Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+                - Sid: CreateLogGroup
+                  Effect: Allow
+                  Action: logs:CreateLogGroup
+                  Resource: "*"
+    productsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.productsTableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    stocksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.stocksTableName}
+        AttributeDefinitions:
+          - AttributeName: product_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: product_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5

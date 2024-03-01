@@ -1,0 +1,19 @@
+{
+  "name": "product-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.mjs",
+  "scripts": {
+    "generate:products:data": "aws dynamodb batch-write-item --request-items file://aws/products-items.json",
+    "generate:stocks:data": "aws dynamodb batch-write-item --request-items file://aws/stocks-items.json",
+    "generate:dynamo:data": "npm run generate:stocks:data && npm run generate:products:data",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.525.0",
+    "@aws-sdk/lib-dynamodb": "^3.525.0",
+    "uuid": "^9.0.1"
+  }
+}
