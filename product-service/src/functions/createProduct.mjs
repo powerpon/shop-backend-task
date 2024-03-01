@@ -2,7 +2,7 @@ import DbClientProvider from "../../aws/dynamodb-client.mjs";
 import {v4 as uuid} from 'uuid';
 import ProductModel from "../models/product.model.mjs";
 import StockModel from "../models/stock.model.mjs";
-import { PutItemCommand, TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
+import { TransactWriteItemsCommand } from "@aws-sdk/client-dynamodb";
 import { marshall } from "@aws-sdk/util-dynamodb";
 
 export async function createProduct(event) {

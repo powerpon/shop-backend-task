@@ -18,7 +18,38 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductStock'
+        '500':
+          description: Internal Server Error
+    post:
+      summary: Create new product
+      operationId: createProduct
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                count:
+                  type: integer
+      responses:
+        '201':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '500':
+          description: Internal Server Error
   /products/{productId}:
     get:
       summary: Get product by ID
@@ -38,7 +69,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductStock'
         '404':
           description: Product not found
           content:
@@ -48,6 +79,9 @@ paths:
                 properties:
                   message:
                     type: string
+        '500':
+          description: Internal Server Error
+
 components:
   schemas:
     Product:
@@ -65,5 +99,35 @@ components:
           description: Title of the product
         price:
           type: number
-          format: integer
           description: Price of the product
+    Stock:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the product
+        count:
+          type: number
+          format: integer
+          description: Number of products
+    ProductStock:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the product
+        description:
+          type: string
+          description: Description of the product
+        title:
+          type: string
+          description: Title of the product
+        price:
+          type: number
+          description: Price of the product
+        count:
+          type: number
+          format: integer
+          description: Number of products
