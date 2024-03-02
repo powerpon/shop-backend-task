@@ -1,0 +1,40 @@
+openapi: 3.0.0
+info:
+  title: Import Service API
+  description: API for uploading and parsing of S3 data
+  version: 1.0.0
+paths:
+  /import:
+    get:
+      summary: Get signed URL for uploading files to S3
+      operationId: getProductsById
+      tags:
+        - Import
+      parameters:
+        - in: query
+          name: name
+          description: Name of the file to be uploaded
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadUrl:
+                    type: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal Server Error

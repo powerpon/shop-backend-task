@@ -1,0 +1,89 @@
+service: import-service
+frameworkVersion: "3"
+
+custom:
+  bucketName: bucket-for-task-5
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  versionFunctions: false
+  environment:
+    S3_REGION: us-east-1
+    S3_BUCKET_NAME: ${self:custom.bucketName}
+    FRONTEND_URL: https://d2q2y64ixwkjjo.cloudfront.net
+
+functions:
+  importProductsFile:
+    handler: handler.importProductsFile
+    events:
+      - httpApi:
+          path: /import
+          method: get
+    role: ImportProductsFileRole
+  importFileParser:
+    handler: handler.importFileParser
+    events:
+      - s3:
+          bucket: ${self:custom.bucketName}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: uploaded/
+    role: ImportFileParserRole
+
+resources:
+  Resources:
+    ImportProductsFileRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ImportProductsFileRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: ImportProductsFilePolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: s3:PutObject
+                  Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+    ImportFileParserRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ImportFileParserRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: ImportFileParserPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: 
+                    - s3:GetObject
+                    - s3:PutObject
+                    - s3:DeleteObject
+                  Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
