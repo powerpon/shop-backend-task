@@ -4,6 +4,7 @@ frameworkVersion: "3"
 custom:
   productsTableName: products
   stocksTableName: stocks
+  sqsQueueName: catalogItemsQueue
 
 provider:
   name: aws
@@ -14,6 +15,10 @@ provider:
       FRONTEND_URL: https://d2q2y64ixwkjjo.cloudfront.net
       PRODUCTS_TABLE_NAME: ${self:custom.productsTableName}
       STOCKS_TABLE_NAME: ${self:custom.stocksTableName}
+      SNS_REGION: us-east-1
+      DB_REGION: us-east-1
+      SNS_TOPIC_ARN:
+        Ref: createProductTopic
 
 functions:
   getProductsList:
@@ -37,9 +42,90 @@ functions:
           path: /products
           method: post
     role: dynamodbLambdaRole
+  catalogBatchProcess:
+    handler: handler.catalogBatchProcess
+    events:
+      - sqs: 
+          arn: 
+            Fn::GetAtt: [catalogItemsQueue, Arn]
+          batchSize: 5
+    role: dynamodbSnsSqsLambdaRole
 
 resources:
   Resources:
+    createProductTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: createProductTopic
+    createProductEmailSubscription1:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Protocol: email
+        TopicArn: 
+          Ref: createProductTopic
+        Endpoint: novcicstefke6@gmail.com
+    catalogItemsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.sqsQueueName}
+    dynamodbSnsSqsLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: dynamodbSnsSqsLambdaRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: DynamoDBAndSQSAccessPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: PublishToTopic
+                  Effect: Allow
+                  Action: sns:Publish
+                  Resource:
+                    Ref: createProductTopic
+                - Sid: ReceiveDeleteMessages
+                  Effect: Allow
+                  Action: 
+                    - sqs:ReceiveMessage
+                    - sqs:DeleteMessage
+                    - sqs:GetQueueAttributes
+                  Resource:
+                    Fn::GetAtt: [catalogItemsQueue, Arn]
+                - Sid: ReadWriteTable
+                  Effect: Allow
+                  Action: 
+                    - dynamodb:BatchGetItem
+                    - dynamodb:GetItem
+                    - dynamodb:Query
+                    - dynamodb:Scan
+                    - dynamodb:BatchWriteItem
+                    - dynamodb:PutItem
+                    - dynamodb:UpdateItem
+                  Resource:  
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.productsTableName}"
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.stocksTableName}"
+                - Sid: GetStreamRecords
+                  Effect: Allow
+                  Action: dynamodb:GetRecords
+                  Resource: 
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.productsTableName}/stream/*"
+                    - "arn:aws:dynamodb:*:*:table/${self:custom.stocksTableName}/stream/*"
+                - Sid: WriteLogStreamsAndGroups
+                  Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+                - Sid: CreateLogGroup
+                  Effect: Allow
+                  Action: logs:CreateLogGroup
+                  Resource: "*"
     dynamodbLambdaRole:
       Type: AWS::IAM::Role
       Properties:
