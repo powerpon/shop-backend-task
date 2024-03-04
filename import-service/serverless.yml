@@ -3,6 +3,7 @@ frameworkVersion: "3"
 
 custom:
   bucketName: bucket-for-task-5
+  sqsQueueName: catalogItemsQueue
 
 provider:
   name: aws
@@ -13,6 +14,8 @@ provider:
     S3_REGION: us-east-1
     S3_BUCKET_NAME: ${self:custom.bucketName}
     FRONTEND_URL: https://d2q2y64ixwkjjo.cloudfront.net
+    SQS_REGION: us-east-1
+    SQS_URL: https://sqs.us-east-1.amazonaws.com/411760523065/${self:custom.sqsQueueName}
 
 functions:
   importProductsFile:
@@ -87,3 +90,6 @@ resources:
                     - logs:CreateLogStream
                     - logs:PutLogEvents
                   Resource: "*"
+                - Effect: Allow
+                  Action: sqs:sendmessage
+                  Resource: "arn:aws:sqs:*:*:${self:custom.sqsQueueName}"
