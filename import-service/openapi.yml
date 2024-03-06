@@ -36,5 +36,30 @@ paths:
                 properties:
                   message:
                     type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         '500':
           description: Internal Server Error
+security:
+  - base64Auth: []
+components:
+  securitySchemes:
+    base64Auth:
+      type: http
+      scheme: basic
