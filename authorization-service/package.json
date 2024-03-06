@@ -1,0 +1,17 @@
+{
+  "name": "authorization-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "serverless-dotenv-plugin": "^6.0.0"
+  }
+}

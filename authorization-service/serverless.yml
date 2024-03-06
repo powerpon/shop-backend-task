@@ -1,0 +1,20 @@
+service: authorization-service
+frameworkVersion: "3"
+
+plugins:
+  - serverless-dotenv-plugin
+
+custom:
+  dotenv:
+    required:
+      env:
+        - powerpon
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+
+functions:
+  basicAuthorizer:
+    handler: handler.basicAuthorizer

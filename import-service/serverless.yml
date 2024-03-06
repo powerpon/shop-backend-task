@@ -4,12 +4,18 @@ frameworkVersion: "3"
 custom:
   bucketName: bucket-for-task-5
   sqsQueueName: catalogItemsQueue
+  basicAuthorizerLambdaArn: arn:aws:lambda:us-east-1:411760523065:function:authorization-service-dev-basicAuthorizer
 
 provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
   versionFunctions: false
+  httpApi:
+    authorizers:
+      basicAuthorizer:
+        type: request
+        functionArn: ${self:custom.basicAuthorizerLambdaArn}
   environment:
     S3_REGION: us-east-1
     S3_BUCKET_NAME: ${self:custom.bucketName}
@@ -24,6 +30,8 @@ functions:
       - httpApi:
           path: /import
           method: get
+          authorizer: 
+            name: basicAuthorizer
     role: ImportProductsFileRole
   importFileParser:
     handler: handler.importFileParser
